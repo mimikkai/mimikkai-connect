@@ -1,27 +1,12 @@
 # mimikkai-connect
 
-MimikkAi Coding Plan Helper — CLI для настройки coding-агентов (Claude Code, Codex) на аккаунте [mimikkai.ru](https://mimikkai.ru).
-
-Порты паттернов [@z_ai/coding-helper](https://www.npmjs.com/package/@z_ai/coding-helper): один менеджер на инструмент, конфиг в `~/.mimikkai-connect/config.yaml`, i18n, doctor. Авторизация — device flow mimikkai (по образцу mimikkai-connector-copilot).
+CLI для настройки coding-агентов (Claude Code, Codex) на аккаунте [mimikkai.ru](https://mimikkai.ru).
 
 ## Установка / запуск
 
-Без установки (npx ≥ 10 или Bun ≥ 1.0):
-
 ```bash
-npx github:mimikkai/mimikkai-connect --help
-bunx github:mimikkai/mimikkai-connect --help
-
 npx github:mimikkai/mimikkai-connect init
 bunx github:mimikkai/mimikkai-connect init
-```
-
-Из клона:
-
-```bash
-git clone https://github.com/mimikkai/mimikkai-connect
-cd mimikkai-connect/packages/cli
-bun install && bun run dev -- --help
 ```
 
 ## Команды
