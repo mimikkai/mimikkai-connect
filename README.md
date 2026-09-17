@@ -6,6 +6,9 @@ CLI для настройки coding-агентов (Claude Code, Codex) на а
 
 ```bash
 npx github:mimikkai/mimikkai-connect init
+```
+
+```
 bunx github:mimikkai/mimikkai-connect init
 ```
 
