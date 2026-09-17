@@ -80,8 +80,8 @@ export const codexManager: AgentManager = {
         name: PROVIDER_KEY,
         base_url: LITELLM_OPENAI_BASE_URL,
         experimental_bearer_token: litellmKey,
-        // LiteLLM exposes the OpenAI Chat Completions API, not Responses.
-        wire_api: "chat",
+        // Codex >=0.154 dropped Chat Completions support; LiteLLM also serves the Responses API.
+        wire_api: "responses",
       },
     };
     writeCodexConfig(config);

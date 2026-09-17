@@ -66,7 +66,7 @@ mimikkai-connect
        └─ codex  → ~/.codex/config.toml
             model_provider = MIMIKKAI
             model_providers.MIMIKKAI.base_url = https://litellm.mimikkai.ru/v1
-            wire_api = chat
+            wire_api = responses
 ```
 
 Дефолтная модель — `glm-5.3-flash`. При `unload` (revoke) удаляются только поля, записанные mimikkai-connect; ваши настройки инструментов не трогаются.

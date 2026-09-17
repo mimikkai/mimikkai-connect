@@ -36695,7 +36695,7 @@ var codexManager = {
         name: PROVIDER_KEY,
         base_url: LITELLM_OPENAI_BASE_URL,
         experimental_bearer_token: litellmKey,
-        wire_api: "chat"
+        wire_api: "responses"
       }
     };
     writeCodexConfig(config);
