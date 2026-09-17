@@ -5,9 +5,6 @@
  */
 
 import { Command } from "commander";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
 import { logger, setLogLevel } from "./utils/logger.ts";
 import { t } from "./i18n.ts";
 import { runInit } from "./commands/init.ts";
@@ -15,16 +12,16 @@ import { printLangHelp, setLang, showLang } from "./commands/lang.ts";
 import { PLAN_ALIASES, reloadTool, revokeAuth, runInteractiveAuth, setKeyWithPlan } from "./commands/auth.ts";
 import { runDoctor } from "./commands/doctor.ts";
 
-const pkg = JSON.parse(
-  readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "package.json"), "utf-8")
-) as { version: string };
+// Injected at build time via --define (falls back for `bun run src/cli.ts` dev mode).
+declare const CLI_VERSION: string | undefined;
+const CLI_VERSION_DEV = "0.1.0";
 
 const program = new Command();
 
 program
   .name("mimikkai-connect")
   .description(t("cli.description"))
-  .version(pkg.version, "-v, --version", "output the version number")
+  .version(typeof CLI_VERSION !== "undefined" ? CLI_VERSION : CLI_VERSION_DEV, "-v, --version", "output the version number")
   .helpOption("-h, --help", "display help")
   .option("--verbose", t("cli.verboseHint"), false)
   .hook("preAction", (thisCommand) => {

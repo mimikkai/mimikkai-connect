@@ -2,7 +2,7 @@
   "name": "mimikkai-connect",
   "private": true,
   "bin": {
-    "mimikkai-connect": "packages/cli/dist/cli.js"
+    "mimikkai-connect": "packages/cli/dist/cli.node.mjs"
   },
   "workspaces": ["packages/*"]
 }

@@ -17,8 +17,9 @@
   },
   "scripts": {
     "dev": "bun run src/cli.ts",
-    "build": "bun build ./src/cli.ts --target=bun --outfile dist/cli.js && bun -e \"const { cpSync } = require('node:fs'); cpSync('locales', 'dist/locales', { recursive: true })\"",
-    "start": "bun dist/cli.js"
+    "start": "bun dist/cli.js",
+    "build": "bun run scripts/build.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "chalk": "^5.3.0",

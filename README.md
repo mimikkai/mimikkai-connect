@@ -6,17 +6,22 @@ MimikkAi Coding Plan Helper — CLI для настройки coding-агент�
 
 ## Установка / запуск
 
-Без установки (Bun ≥ 1.0):
+Без установки (npx ≥ 10 или Bun ≥ 1.0):
 
 ```bash
+npx github:mimikkai/mimikkai-connect --help
 bunx github:mimikkai/mimikkai-connect --help
+
+npx github:mimikkai/mimikkai-connect init
 bunx github:mimikkai/mimikkai-connect init
 ```
 
 Из клона:
 
 ```bash
-bun install && bun run dev -- --help   # в packages/cli
+git clone https://github.com/mimikkai/mimikkai-connect
+cd mimikkai-connect/packages/cli
+bun install && bun run dev -- --help
 ```
 
 ## Команды
@@ -101,8 +106,8 @@ git clone https://github.com/mimikkai/mimikkai-connect
 cd mimikkai-connect/packages/cli
 bun install
 bun run dev        # запуск из исходников
-bun run build      # bun build → dist/cli.js + locales
-bunx tsc --noEmit  # type check
+bun run build      # dist/cli.js (bun) + dist/cli.node.mjs (node) + locales
+bun run typecheck
 ```
 
 Стек: Bun + TypeScript, commander, inquirer, ora, chalk, js-yaml, smol-toml.
