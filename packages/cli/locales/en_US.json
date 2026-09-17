@@ -1,0 +1,64 @@
+{
+  "cli": {
+    "description": "MimikkAi Coding Plan Helper for managing coding tools",
+    "verboseHint": "enable verbose (DEBUG) logging"
+  },
+  "init": {
+    "welcome": "Welcome to mimikkai-connect setup wizard!",
+    "selectLanguage": "Select language / Выберите язык:",
+    "selectTool": "Select a coding tool to configure:",
+    "toolInstalled": "installed",
+    "toolNotInstalled": "not installed",
+    "configuring": "Configuring {{tool}}...",
+    "configured": "{{tool}} configured successfully (model: {{model}}).",
+    "authRequired": "Authentication required.",
+    "summary": "Setup complete!\n  Language: {{lang}}\n  Account: {{email}}\n  Plan: {{plan}}\n  Tool: {{tool}}",
+    "cancelled": "Setup cancelled."
+  },
+  "lang": {
+    "current": "Current language: {{lang}}",
+    "set": "Language set to {{lang}}",
+    "invalid": "Unsupported language: {{lang}}. Supported: {{supported}}",
+    "help": "Show or set the UI language.\n\nUsage:\n  mimikkai-connect lang show\n  mimikkai-connect lang set <code>   (en_US, ru_RU)"
+  },
+  "auth": {
+    "help": "Manage authentication with mimikkai.ru.\n\nUsage:\n  mimikkai-connect auth                                    Interactively authenticate\n  mimikkai-connect auth glm_coding_plan_global <token>     Set key directly (Global plan alias)\n  mimikkai-connect auth glm_coding_plan_china <token>      Set key directly (China plan alias)\n  mimikkai-connect auth revoke                             Delete the saved key\n  mimikkai-connect auth reload claude                      Load latest plan info into Claude Code",
+    "methodSelect": "Select an authentication method:",
+    "methodDevice": "Open a browser and confirm a device code (recommended)",
+    "methodToken": "Paste a token manually",
+    "tokenPrompt": "Enter your mimikkai API token:",
+    "deviceOpen": "Opening {{url}}",
+    "deviceCode": "Enter this code in the browser: {{code}}",
+    "deviceWaiting": "Waiting for authorization...",
+    "deviceExpired": "The device code has expired. Please try again.",
+    "deviceCancelled": "Authorization cancelled.",
+    "networkError": "Network error: {{message}}",
+    "unexpectedError": "Unexpected error: {{message}}",
+    "tokenInvalid": "Token is not valid.",
+    "tokenValid": "Token is valid. Welcome, {{name}} <{{email}}>!",
+    "litellmKeyMissing": "Could not retrieve the LiteLLM key for your account. Agents cannot be configured.",
+    "saved": "Authentication saved.",
+    "revoked": "Saved authentication revoked.",
+    "noKey": "No saved key found. Run `mimikkai-connect auth` first.",
+    "reloadDone": "{{tool}} configuration loaded (model: {{model}}).",
+    "reloadUnknownTool": "Unknown tool: {{tool}}. Supported: {{supported}}",
+    "planSet": "Plan set to {{plan}}."
+  },
+  "doctor": {
+    "title": "mimikkai-connect doctor",
+    "configExists": "Config file",
+    "keyPresent": "API key saved",
+    "keyValid": "API key valid",
+    "toolInstalled": "{{tool}} installed",
+    "toolConfigured": "{{tool}} configured",
+    "network": "Network reachability ({{host}})",
+    "ok": "OK",
+    "warn": "WARN",
+    "fail": "FAIL",
+    "hintAuth": "Hint: run `mimikkai-connect auth` to authenticate.",
+    "hintInit": "Hint: run `mimikkai-connect init` to set up."
+  },
+  "errors": {
+    "unknown": "Unknown error: {{message}}"
+  }
+}

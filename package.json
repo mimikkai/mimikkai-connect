@@ -1,0 +1,5 @@
+{
+  "name": "mimikkai-connect",
+  "private": true,
+  "workspaces": ["packages/*"]
+}

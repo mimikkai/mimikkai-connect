@@ -1,0 +1,32 @@
+{
+  "name": "mimikkai-connect",
+  "version": "0.1.0",
+  "description": "MimikkAi Coding Plan Helper for managing coding tools (Claude Code, Codex)",
+  "main": "dist/cli.js",
+  "bin": {
+    "mimikkai-connect": "dist/cli.js"
+  },
+  "type": "module",
+  "files": ["dist"],
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "scripts": {
+    "dev": "bun run src/cli.ts",
+    "build": "bun build ./src/cli.ts --target=bun --outfile dist/cli.js && bun -e \"const { cpSync } = require('node:fs'); cpSync('locales', 'dist/locales', { recursive: true })\"",
+    "start": "bun dist/cli.js"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "inquirer": "^9.2.12",
+    "js-yaml": "^4.1.0",
+    "ora": "^8.0.1",
+    "smol-toml": "^1.7.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/inquirer": "^9.0.7",
+    "@types/js-yaml": "^4.0.9"
+  }
+}
