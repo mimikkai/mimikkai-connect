@@ -2,12 +2,15 @@
   "name": "mimikkai-connect",
   "version": "0.1.0",
   "description": "MimikkAi Coding Plan Helper for managing coding tools (Claude Code, Codex)",
-  "main": "dist/cli.js",
+  "main": "src/cli.ts",
   "bin": {
-    "mimikkai-connect": "dist/cli.js"
+    "mimikkai-connect": "src/cli.ts"
   },
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "src",
+    "locales"
+  ],
   "engines": {
     "bun": ">=1.0.0"
   },
