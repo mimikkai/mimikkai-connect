@@ -1,0 +1,64 @@
+{
+  "cli": {
+    "description": "MimikkAi Coding Plan Helper — управление инструментами для кодинга",
+    "verboseHint": "подробное (DEBUG) логирование"
+  },
+  "init": {
+    "welcome": "Добро пожаловать в мастер настройки mimikkai-connect!",
+    "selectLanguage": "Выберите язык / Select language:",
+    "selectTool": "Выберите инструмент для настройки:",
+    "toolInstalled": "установлен",
+    "toolNotInstalled": "не установлен",
+    "configuring": "Настраиваю {{tool}}...",
+    "configured": "{{tool}} настроен (модель: {{model}}).",
+    "authRequired": "Требуется авторизация.",
+    "summary": "Настройка завершена!\n  Язык: {{lang}}\n  Аккаунт: {{email}}\n  План: {{plan}}\n  Инструмент: {{tool}}",
+    "cancelled": "Настройка отменена."
+  },
+  "lang": {
+    "current": "Текущий язык: {{lang}}",
+    "set": "Установлен язык: {{lang}}",
+    "invalid": "Неподдерживаемый язык: {{lang}}. Поддерживаются: {{supported}}",
+    "help": "Показать или установить язык интерфейса.\n\nИспользование:\n  mimikkai-connect lang show\n  mimikkai-connect lang set <код>   (en_US, ru_RU)"
+  },
+  "auth": {
+    "help": "Управление авторизацией на mimikkai.ru.\n\nИспользование:\n  mimikkai-connect auth                                    Интерактивная авторизация\n  mimikkai-connect auth glm_coding_plan_global <token>     Задать ключ напрямую (тариф Global)\n  mimikkai-connect auth glm_coding_plan_china <token>      Задать ключ напрямую (тариф China)\n  mimikkai-connect auth revoke                             Удалить сохранённый ключ\n  mimikkai-connect auth reload claude                      Загрузить настройки в Claude Code",
+    "methodSelect": "Выберите способ авторизации:",
+    "methodDevice": "Открыть браузер и подтвердить код устройства (рекомендуется)",
+    "methodToken": "Ввести токен вручную",
+    "tokenPrompt": "Введите API-токен mimikkai:",
+    "deviceOpen": "Открываю {{url}}",
+    "deviceCode": "Введите этот код в браузере: {{code}}",
+    "deviceWaiting": "Ожидаю подтверждения...",
+    "deviceExpired": "Срок действия кода устройства истёк. Попробуйте ещё раз.",
+    "deviceCancelled": "Авторизация отменена.",
+    "networkError": "Ошибка сети: {{message}}",
+    "unexpectedError": "Неожиданная ошибка: {{message}}",
+    "tokenInvalid": "Токен недействителен.",
+    "tokenValid": "Токен действителен. Здравствуйте, {{name}} <{{email}}>!",
+    "litellmKeyMissing": "Не удалось получить LiteLLM-ключ вашего аккаунта. Настройка агентов невозможна.",
+    "saved": "Авторизация сохранена.",
+    "revoked": "Сохранённая авторизация удалена.",
+    "noKey": "Ключ не найден. Сначала выполните `mimikkai-connect auth`.",
+    "reloadDone": "Конфигурация {{tool}} загружена (модель: {{model}}).",
+    "reloadUnknownTool": "Неизвестный инструмент: {{tool}}. Поддерживаются: {{supported}}",
+    "planSet": "Тариф: {{plan}}."
+  },
+  "doctor": {
+    "title": "mimikkai-connect doctor",
+    "configExists": "Файл конфигурации",
+    "keyPresent": "API-ключ сохранён",
+    "keyValid": "API-ключ действителен",
+    "toolInstalled": "{{tool}} установлен",
+    "toolConfigured": "{{tool}} настроен",
+    "network": "Доступность сети ({{host}})",
+    "ok": "OK",
+    "warn": "ВНИМАНИЕ",
+    "fail": "ОШИБКА",
+    "hintAuth": "Подсказка: выполните `mimikkai-connect auth` для авторизации.",
+    "hintInit": "Подсказка: выполните `mimikkai-connect init` для настройки."
+  },
+  "errors": {
+    "unknown": "Неизвестная ошибка: {{message}}"
+  }
+}
