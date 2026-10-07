@@ -22,6 +22,7 @@ import { fetchLitellmVirtualKey } from "../auth/litellmKey.ts";
 import { claudeCodeManager } from "../agents/claudeCode.ts";
 import { codexManager } from "../agents/codex.ts";
 import type { AgentManager } from "../agents/base.ts";
+import { detectForeignProvider, defaultConfirmOverwrite } from "./toolConfig.ts";
 
 /** Reserved plan aliases (both map to the single mimikkai LiteLLM endpoint). */
 export const PLAN_ALIASES = ["glm_coding_plan_global", "glm_coding_plan_china"] as const;
@@ -165,6 +166,16 @@ export async function reloadTool(toolId: string): Promise<void> {
       console.error(chalk.red(t("auth.litellmKeyMissing")));
       logger.error("auth", `litellm key fetch failed: ${error instanceof Error ? error.message : String(error)}`);
       process.exitCode = 1;
+      return;
+    }
+  }
+
+  // If the tool is currently configured for a different provider, confirm overwrite
+  if (detectForeignProvider(agent)) {
+    console.log(chalk.yellow(t("init.overwriteForeignAsk", { tool: agent.displayName })));
+    const ok = await defaultConfirmOverwrite(t("init.overwriteConfirm", { tool: agent.displayName }));
+    if (!ok) {
+      console.log(chalk.red(t("init.overwriteCancelled", { tool: agent.displayName })));
       return;
     }
   }

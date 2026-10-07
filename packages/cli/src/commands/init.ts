@@ -6,8 +6,10 @@
 import inquirer from "inquirer";
 import chalk from "chalk";
 import { configManager } from "../config.ts";
+import { logger } from "../utils/logger.ts";
 import { SUPPORTED_LANGS, t } from "../i18n.ts";
 import { runInteractiveAuth } from "./auth.ts";
+import { resolveExistingToolConfig } from "./toolConfig.ts";
 import { claudeCodeManager } from "../agents/claudeCode.ts";
 import { codexManager } from "../agents/codex.ts";
 import type { AgentManager } from "../agents/base.ts";
@@ -54,15 +56,55 @@ export async function runInit(): Promise<void> {
   ]);
 
   const agent = AGENTS.find((a) => a.id === toolId)!;
-  console.log(chalk.cyan(t("init.configuring", { tool: agent.displayName })));
+
+  // Resolve what to do if the tool already has a mimikkai/foreign configuration
+  const resolution = await resolveExistingToolConfig(agent, {
+    getLitellmKey: () => configManager.getLitellmKey(),
+  });
+  logger.debug("init", `tool ${agent.id} resolution: ${resolution}`);
+
   const litellmKey = configManager.getLitellmKey();
-  if (!litellmKey) {
+  if (resolution === "keep") {
+    // Leave the existing configuration untouched, just show the summary
+    console.log(t("init.summary", {
+      lang: configManager.getLang(),
+      email: configManager.getApiKey() ? "authenticated" : "-",
+      plan: configManager.getPlan() ?? "mimikkai",
+      tool: agent.displayName,
+    }));
+    return;
+  }
+
+  if (resolution === "unbind") {
+    console.log(t("init.summary", {
+      lang: configManager.getLang(),
+      email: configManager.getApiKey() ? "authenticated" : "-",
+      plan: configManager.getPlan() ?? "mimikkai",
+      tool: agent.displayName,
+    }));
+    return;
+  }
+
+  if (resolution === "reauthorise") {
+    console.log(chalk.cyan(t("init.authRequired")));
+    const authOk = await runInteractiveAuth();
+    if (!authOk) {
+      console.log(chalk.red(t("init.cancelled")));
+      process.exitCode = 1;
+      return;
+    }
+  }
+
+  const finalKey = configManager.getLitellmKey();
+  if (!finalKey) {
     console.error(chalk.red(t("auth.litellmKeyMissing")));
     process.exitCode = 1;
     return;
   }
+  console.log(chalk.cyan(t("init.configuring", { tool: agent.displayName })));
+
   const model = agent.defaultModel;
-  await agent.loadConfig(configManager.getPlan() ?? "mimikkai", litellmKey, model);
+  await agent.loadConfig(configManager.getPlan() ?? "mimikkai", finalKey, model);
 
   // 4. Summary
   console.log(chalk.green(t("init.configured", { tool: agent.displayName, model })));
