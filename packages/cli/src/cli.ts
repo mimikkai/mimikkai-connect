@@ -5,7 +5,7 @@
  */
 
 import { Command } from "commander";
-import { logger, setLogLevel } from "./utils/logger.ts";
+import { logger, setLogLevel, normalizeWindowsCodepage } from "./utils/logger.ts";
 import { t } from "./i18n.ts";
 import { runInit } from "./commands/init.ts";
 import { printLangHelp, setLang, showLang } from "./commands/lang.ts";
@@ -17,6 +17,9 @@ declare const CLI_VERSION: string | undefined;
 const CLI_VERSION_DEV = "0.1.0";
 
 const program = new Command();
+
+// Windows legacy codepages garble Cyrillic output; force UTF-8 console once.
+normalizeWindowsCodepage();
 
 program
   .name("mimikkai-connect")

@@ -28475,6 +28475,16 @@ function emit(level, module, message) {
     console.log(line);
   }
 }
+function normalizeWindowsCodepage() {
+  if (process.platform !== "win32")
+    return;
+  try {
+    Bun.spawnSync(["cmd", "/d", "/c", "chcp", "65001"], { stdout: "ignore", stderr: "ignore" });
+    logger.debug("cli", "windows codepage set to 65001 (UTF-8)");
+  } catch (error) {
+    logger.debug("cli", `failed to set windows codepage: ${error}`);
+  }
+}
 var logger = {
   debug(module, message) {
     if (enabled("debug"))
@@ -37322,6 +37332,7 @@ async function runDoctor() {
 
 // src/cli.ts
 var program2 = new Command2;
+normalizeWindowsCodepage();
 program2.name("mimikkai-connect").description(t("cli.description")).version("0.1.0", "-v, --version", "output the version number").helpOption("-h, --help", "display help").option("--verbose", t("cli.verboseHint"), false).hook("preAction", (thisCommand) => {
   if (thisCommand.opts().verbose)
     setLogLevel("debug");

@@ -47,6 +47,20 @@ function emit(level: Exclude<LogLevel, "debug">, module: string, message: string
   }
 }
 
+/** On Windows the console may use a legacy codepage (cp1251/cp850), which
+ * garbles Unicode output ("Русский" -> "Ð ÑÑÐºÐ¸Ð¹"). Switch the codepage
+ * to 65001 (UTF-8) once per process — no-op on failure or other platforms.
+ */
+export function normalizeWindowsCodepage(): void {
+  if (process.platform !== "win32") return;
+  try {
+    Bun.spawnSync(["cmd", "/d", "/c", "chcp", "65001"], { stdout: "ignore", stderr: "ignore" });
+    logger.debug("cli", "windows codepage set to 65001 (UTF-8)");
+  } catch (error) {
+    logger.debug("cli", `failed to set windows codepage: ${error}`);
+  }
+}
+
 export const logger = {
   debug(module: string, message: string): void {
     if (enabled("debug")) console.log(`[mimikkai-connect.${module}] [DEBUG] ${message}`);
