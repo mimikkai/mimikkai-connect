@@ -13,7 +13,18 @@
     "configured": "{{tool}} configured successfully (model: {{model}}).",
     "authRequired": "Authentication required.",
     "summary": "Setup complete!\n  Language: {{lang}}\n  Account: {{email}}\n  Plan: {{plan}}\n  Tool: {{tool}}",
-    "cancelled": "Setup cancelled."
+    "cancelled": "Setup cancelled.",
+    "alreadyConfigured": "{{tool}} is already configured for mimikkai.",
+    "alreadyConfiguredOtherKey": "{{tool}} is already configured for mimikkai (a different key is saved).",
+    "rebindPrompt": "What to do with the existing configuration?",
+    "rebindKeep": "Keep as is",
+    "rebindUnbind": "Unbind (sign out of this account)",
+    "rebindRebind": "Bind another account",
+    "unbound": "{{tool}} has been unbound from mimikkai.",
+    "configureAgainPrompt": "Configure {{tool}} again?",
+    "overwriteForeignAsk": "{{tool}} is currently configured for a different provider.",
+    "overwriteConfirm": "Overwrite the {{tool}} configuration with mimikkai?",
+    "overwriteCancelled": "{{tool}} setup cancelled — the existing configuration was left untouched."
   },
   "lang": {
     "current": "Current language: {{lang}}",

@@ -13,7 +13,18 @@
     "configured": "{{tool}} настроен (модель: {{model}}).",
     "authRequired": "Требуется авторизация.",
     "summary": "Настройка завершена!\n  Язык: {{lang}}\n  Аккаунт: {{email}}\n  План: {{plan}}\n  Инструмент: {{tool}}",
-    "cancelled": "Настройка отменена."
+    "cancelled": "Настройка отменена.",
+    "alreadyConfigured": "{{tool}} уже настроен для mimikkai.",
+    "alreadyConfiguredOtherKey": "{{tool}} уже настроен для mimikkai (сохранён другой ключ).",
+    "rebindPrompt": "Что сделать с существующей конфигурацией?",
+    "rebindKeep": "Оставить как есть",
+    "rebindUnbind": "Отвязать (выйти из аккаунта)",
+    "rebindRebind": "Привязать другой аккаунт",
+    "unbound": "{{tool}} отвязан от mimikkai.",
+    "configureAgainPrompt": "Настроить {{tool}} заново?",
+    "overwriteForeignAsk": "{{tool}} сейчас настроен на другого провайдера.",
+    "overwriteConfirm": "Перезаписать конфигурацию {{tool}} на mimikkai?",
+    "overwriteCancelled": "Настройка {{tool}} отменена — существующая конфигурация не тронута."
   },
   "lang": {
     "current": "Текущий язык: {{lang}}",

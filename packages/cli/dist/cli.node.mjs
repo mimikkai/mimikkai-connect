@@ -36830,6 +36830,97 @@ var codexManager = {
   }
 };
 
+// src/commands/toolConfig.ts
+import { existsSync as existsSync7, readFileSync as readFileSync7 } from "node:fs";
+function detectForeignProvider(agent) {
+  if (agent.id === "codex") {
+    const path = `${agent.installMarkerDir}/config.toml`;
+    if (!existsSync7(path))
+      return false;
+    try {
+      const parsed = parse(readFileSync7(path, "utf-8"));
+      const provider = parsed.model_provider;
+      return typeof provider === "string" && provider !== "MIMIKKAI";
+    } catch (error) {
+      logger2.debug("init", `codex foreign-provider probe failed: ${error}`);
+      return false;
+    }
+  }
+  if (agent.id === "claude") {
+    const path = `${agent.installMarkerDir}/settings.json`;
+    if (!existsSync7(path))
+      return false;
+    try {
+      const parsed = JSON.parse(readFileSync7(path, "utf-8"));
+      const base = parsed.env?.ANTHROPIC_BASE_URL;
+      return Boolean(base) && base !== LITELLM_BASE_URL;
+    } catch (error) {
+      logger2.debug("init", `claude foreign-provider probe failed: ${error}`);
+      return false;
+    }
+  }
+  return false;
+}
+async function defaultConfirmOverwrite(message) {
+  const { ok } = await lib_default.prompt([
+    {
+      type: "confirm",
+      name: "ok",
+      message,
+      default: false
+    }
+  ]);
+  return Boolean(ok);
+}
+async function resolveExistingToolConfig(agent, deps) {
+  const detected = agent.detectCurrentConfig();
+  const isMimikkai = detected.plan === "mimikkai" && Boolean(detected.apiKey);
+  if (isMimikkai) {
+    const sameKey = detected.apiKey === deps.getLitellmKey();
+    logger2.debug("init", `${agent.id}: already configured by mimikkai (key=${sameKey ? "current" : "other"})`);
+    if (sameKey) {
+      console.log(source_default.yellow(t2("init.alreadyConfigured", { tool: agent.displayName })));
+    } else {
+      console.log(source_default.yellow(t2("init.alreadyConfiguredOtherKey", { tool: agent.displayName })));
+    }
+    const { action } = await lib_default.prompt([
+      {
+        type: "list",
+        name: "action",
+        message: t2("init.rebindPrompt"),
+        choices: [
+          { name: t2("init.rebindKeep"), value: "keep" },
+          { name: t2("init.rebindUnbind"), value: "unbind" },
+          { name: t2("init.rebindRebind"), value: "rebind" }
+        ]
+      }
+    ]);
+    logger2.debug("init", `${agent.id}: rebind action=${action}`);
+    if (action === "keep")
+      return "keep";
+    if (action === "unbind") {
+      await agent.unloadConfig();
+      console.log(source_default.green(t2("init.unbound", { tool: agent.displayName })));
+      const confirm = deps.confirm ?? defaultConfirmOverwrite;
+      const again = await confirm(t2("init.configureAgainPrompt"));
+      return again ? "proceed" : "unbind";
+    }
+    return "reauthorise";
+  }
+  const foreign = detectForeignProvider(agent);
+  if (foreign) {
+    logger2.debug("init", `${agent.id}: foreign provider detected`);
+    console.log(source_default.yellow(t2("init.overwriteForeignAsk", { tool: agent.displayName })));
+    const confirm = deps.confirm ?? defaultConfirmOverwrite;
+    const ok = await confirm(t2("init.overwriteConfirm"));
+    if (!ok) {
+      console.log(source_default.red(t2("init.overwriteCancelled", { tool: agent.displayName })));
+      return "keep";
+    }
+  }
+  return "proceed";
+}
+
 // src/commands/auth.ts
 function openBrowser(url) {
   logger2.debug("auth", `opening browser: ${url}`);
@@ -36951,15 +37042,47 @@ async function runInit() {
     }
   ]);
   const agent = AGENTS.find((a) => a.id === toolId);
-  console.log(source_default.cyan(t2("init.configuring", { tool: agent.displayName })));
+  const resolution = await resolveExistingToolConfig(agent, {
+    getLitellmKey: () => configManager.getLitellmKey()
+  });
+  logger2.debug("init", `tool ${agent.id} resolution: ${resolution}`);
   const litellmKey = configManager.getLitellmKey();
-  if (!litellmKey) {
+  if (resolution === "keep") {
+    console.log(t2("init.summary", {
+      lang: configManager.getLang(),
+      email: configManager.getApiKey() ? "authenticated" : "-",
+      plan: configManager.getPlan() ?? "mimikkai",
+      tool: agent.displayName
+    }));
+    return;
+  }
+  if (resolution === "unbind") {
+    console.log(t2("init.summary", {
+      lang: configManager.getLang(),
+      email: configManager.getApiKey() ? "authenticated" : "-",
+      plan: configManager.getPlan() ?? "mimikkai",
+      tool: agent.displayName
+    }));
+    return;
+  }
+  if (resolution === "reauthorise") {
+    console.log(source_default.cyan(t2("init.authRequired")));
+    const authOk = await runInteractiveAuth();
+    if (!authOk) {
+      console.log(source_default.red(t2("init.cancelled")));
+      process.exitCode = 1;
+      return;
+    }
+  }
+  const finalKey = configManager.getLitellmKey();
+  if (!finalKey) {
     console.error(source_default.red(t2("auth.litellmKeyMissing")));
     process.exitCode = 1;
     return;
   }
+  console.log(source_default.cyan(t2("init.configuring", { tool: agent.displayName })));
   const model = agent.defaultModel;
-  await agent.loadConfig(configManager.getPlan() ?? "mimikkai", litellmKey, model);
+  await agent.loadConfig(configManager.getPlan() ?? "mimikkai", finalKey, model);
   console.log(source_default.green(t2("init.configured", { tool: agent.displayName, model })));
   console.log(t2("init.summary", {
     lang: configManager.getLang(),
@@ -37094,6 +37217,14 @@ async function reloadTool(toolId) {
       console.error(source_default.red(t2("auth.litellmKeyMissing")));
       logger2.error("auth", `litellm key fetch failed: ${error instanceof Error ? error.message : String(error)}`);
       process.exitCode = 1;
+      return;
+    }
+  }
+  if (detectForeignProvider(agent)) {
+    console.log(source_default.yellow(t2("init.overwriteForeignAsk", { tool: agent.displayName })));
+    const ok = await defaultConfirmOverwrite(t2("init.overwriteConfirm", { tool: agent.displayName }));
+    if (!ok) {
+      console.log(source_default.red(t2("init.overwriteCancelled", { tool: agent.displayName })));
       return;
     }
   }
