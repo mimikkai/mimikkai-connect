@@ -36842,6 +36842,297 @@ var codexManager = {
 
 // src/commands/toolConfig.ts
 import { existsSync as existsSync7, readFileSync as readFileSync7 } from "node:fs";
+
+// ../../node_modules/.bun/@inquirer+figures@2.0.9/node_modules/@inquirer/figures/dist/index.js
+import process11 from "node:process";
+function isUnicodeSupported4() {
+  if (!process11.platform.startsWith("win")) {
+    return process11.env["TERM"] !== "linux";
+  }
+  return Boolean(process11.env["CI"]) || Boolean(process11.env["WT_SESSION"]) || Boolean(process11.env["TERMINUS_SUBLIME"]) || process11.env["ConEmuTask"] === "{cmd::Cmder}" || process11.env["TERM_PROGRAM"] === "Terminus-Sublime" || process11.env["TERM_PROGRAM"] === "vscode" || process11.env["TERM"] === "xterm-256color" || process11.env["TERM"] === "alacritty" || process11.env["TERMINAL_EMULATOR"] === "JetBrains-JediTerm";
+}
+var common3 = {
+  circleQuestionMark: "(?)",
+  questionMarkPrefix: "(?)",
+  square: "█",
+  squareDarkShade: "▓",
+  squareMediumShade: "▒",
+  squareLightShade: "░",
+  squareTop: "▀",
+  squareBottom: "▄",
+  squareLeft: "▌",
+  squareRight: "▐",
+  squareCenter: "■",
+  bullet: "●",
+  dot: "․",
+  ellipsis: "…",
+  pointerSmall: "›",
+  triangleUp: "▲",
+  triangleUpSmall: "▴",
+  triangleDown: "▼",
+  triangleDownSmall: "▾",
+  triangleLeftSmall: "◂",
+  triangleRightSmall: "▸",
+  home: "⌂",
+  heart: "♥",
+  musicNote: "♪",
+  musicNoteBeamed: "♫",
+  arrowUp: "↑",
+  arrowDown: "↓",
+  arrowLeft: "←",
+  arrowRight: "→",
+  arrowLeftRight: "↔",
+  arrowUpDown: "↕",
+  almostEqual: "≈",
+  notEqual: "≠",
+  lessOrEqual: "≤",
+  greaterOrEqual: "≥",
+  identical: "≡",
+  infinity: "∞",
+  subscriptZero: "₀",
+  subscriptOne: "₁",
+  subscriptTwo: "₂",
+  subscriptThree: "₃",
+  subscriptFour: "₄",
+  subscriptFive: "₅",
+  subscriptSix: "₆",
+  subscriptSeven: "₇",
+  subscriptEight: "₈",
+  subscriptNine: "₉",
+  oneHalf: "½",
+  oneThird: "⅓",
+  oneQuarter: "¼",
+  oneFifth: "⅕",
+  oneSixth: "⅙",
+  oneEighth: "⅛",
+  twoThirds: "⅔",
+  twoFifths: "⅖",
+  threeQuarters: "¾",
+  threeFifths: "⅗",
+  threeEighths: "⅜",
+  fourFifths: "⅘",
+  fiveSixths: "⅚",
+  fiveEighths: "⅝",
+  sevenEighths: "⅞",
+  line: "─",
+  lineBold: "━",
+  lineDouble: "═",
+  lineDashed0: "┄",
+  lineDashed1: "┅",
+  lineDashed2: "┈",
+  lineDashed3: "┉",
+  lineDashed4: "╌",
+  lineDashed5: "╍",
+  lineDashed6: "╴",
+  lineDashed7: "╶",
+  lineDashed8: "╸",
+  lineDashed9: "╺",
+  lineDashed10: "╼",
+  lineDashed11: "╾",
+  lineDashed12: "−",
+  lineDashed13: "–",
+  lineDashed14: "‐",
+  lineDashed15: "⁃",
+  lineVertical: "│",
+  lineVerticalBold: "┃",
+  lineVerticalDouble: "║",
+  lineVerticalDashed0: "┆",
+  lineVerticalDashed1: "┇",
+  lineVerticalDashed2: "┊",
+  lineVerticalDashed3: "┋",
+  lineVerticalDashed4: "╎",
+  lineVerticalDashed5: "╏",
+  lineVerticalDashed6: "╵",
+  lineVerticalDashed7: "╷",
+  lineVerticalDashed8: "╹",
+  lineVerticalDashed9: "╻",
+  lineVerticalDashed10: "╽",
+  lineVerticalDashed11: "╿",
+  lineDownLeft: "┐",
+  lineDownLeftArc: "╮",
+  lineDownBoldLeftBold: "┓",
+  lineDownBoldLeft: "┒",
+  lineDownLeftBold: "┑",
+  lineDownDoubleLeftDouble: "╗",
+  lineDownDoubleLeft: "╖",
+  lineDownLeftDouble: "╕",
+  lineDownRight: "┌",
+  lineDownRightArc: "╭",
+  lineDownBoldRightBold: "┏",
+  lineDownBoldRight: "┎",
+  lineDownRightBold: "┍",
+  lineDownDoubleRightDouble: "╔",
+  lineDownDoubleRight: "╓",
+  lineDownRightDouble: "╒",
+  lineUpLeft: "┘",
+  lineUpLeftArc: "╯",
+  lineUpBoldLeftBold: "┛",
+  lineUpBoldLeft: "┚",
+  lineUpLeftBold: "┙",
+  lineUpDoubleLeftDouble: "╝",
+  lineUpDoubleLeft: "╜",
+  lineUpLeftDouble: "╛",
+  lineUpRight: "└",
+  lineUpRightArc: "╰",
+  lineUpBoldRightBold: "┗",
+  lineUpBoldRight: "┖",
+  lineUpRightBold: "┕",
+  lineUpDoubleRightDouble: "╚",
+  lineUpDoubleRight: "╙",
+  lineUpRightDouble: "╘",
+  lineUpDownLeft: "┤",
+  lineUpBoldDownBoldLeftBold: "┫",
+  lineUpBoldDownBoldLeft: "┨",
+  lineUpDownLeftBold: "┥",
+  lineUpBoldDownLeftBold: "┩",
+  lineUpDownBoldLeftBold: "┪",
+  lineUpDownBoldLeft: "┧",
+  lineUpBoldDownLeft: "┦",
+  lineUpDoubleDownDoubleLeftDouble: "╣",
+  lineUpDoubleDownDoubleLeft: "╢",
+  lineUpDownLeftDouble: "╡",
+  lineUpDownRight: "├",
+  lineUpBoldDownBoldRightBold: "┣",
+  lineUpBoldDownBoldRight: "┠",
+  lineUpDownRightBold: "┝",
+  lineUpBoldDownRightBold: "┡",
+  lineUpDownBoldRightBold: "┢",
+  lineUpDownBoldRight: "┟",
+  lineUpBoldDownRight: "┞",
+  lineUpDoubleDownDoubleRightDouble: "╠",
+  lineUpDoubleDownDoubleRight: "╟",
+  lineUpDownRightDouble: "╞",
+  lineDownLeftRight: "┬",
+  lineDownBoldLeftBoldRightBold: "┳",
+  lineDownLeftBoldRightBold: "┯",
+  lineDownBoldLeftRight: "┰",
+  lineDownBoldLeftBoldRight: "┱",
+  lineDownBoldLeftRightBold: "┲",
+  lineDownLeftRightBold: "┮",
+  lineDownLeftBoldRight: "┭",
+  lineDownDoubleLeftDoubleRightDouble: "╦",
+  lineDownDoubleLeftRight: "╥",
+  lineDownLeftDoubleRightDouble: "╤",
+  lineUpLeftRight: "┴",
+  lineUpBoldLeftBoldRightBold: "┻",
+  lineUpLeftBoldRightBold: "┷",
+  lineUpBoldLeftRight: "┸",
+  lineUpBoldLeftBoldRight: "┹",
+  lineUpBoldLeftRightBold: "┺",
+  lineUpLeftRightBold: "┶",
+  lineUpLeftBoldRight: "┵",
+  lineUpDoubleLeftDoubleRightDouble: "╩",
+  lineUpDoubleLeftRight: "╨",
+  lineUpLeftDoubleRightDouble: "╧",
+  lineUpDownLeftRight: "┼",
+  lineUpBoldDownBoldLeftBoldRightBold: "╋",
+  lineUpDownBoldLeftBoldRightBold: "╈",
+  lineUpBoldDownLeftBoldRightBold: "╇",
+  lineUpBoldDownBoldLeftRightBold: "╊",
+  lineUpBoldDownBoldLeftBoldRight: "╉",
+  lineUpBoldDownLeftRight: "╀",
+  lineUpDownBoldLeftRight: "╁",
+  lineUpDownLeftBoldRight: "┽",
+  lineUpDownLeftRightBold: "┾",
+  lineUpBoldDownBoldLeftRight: "╂",
+  lineUpDownLeftBoldRightBold: "┿",
+  lineUpBoldDownLeftBoldRight: "╃",
+  lineUpBoldDownLeftRightBold: "╄",
+  lineUpDownBoldLeftBoldRight: "╅",
+  lineUpDownBoldLeftRightBold: "╆",
+  lineUpDoubleDownDoubleLeftDoubleRightDouble: "╬",
+  lineUpDoubleDownDoubleLeftRight: "╫",
+  lineUpDownLeftDoubleRightDouble: "╪",
+  lineCross: "╳",
+  lineBackslash: "╲",
+  lineSlash: "╱"
+};
+var specialMainSymbols2 = {
+  tick: "✔",
+  info: "ℹ",
+  warning: "⚠",
+  cross: "✘",
+  squareSmall: "◻",
+  squareSmallFilled: "◼",
+  circle: "◯",
+  circleFilled: "◉",
+  circleDotted: "◌",
+  circleDouble: "◎",
+  circleCircle: "ⓞ",
+  circleCross: "ⓧ",
+  circlePipe: "Ⓘ",
+  radioOn: "◉",
+  radioOff: "◯",
+  checkboxOn: "☒",
+  checkboxOff: "☐",
+  checkboxCircleOn: "ⓧ",
+  checkboxCircleOff: "Ⓘ",
+  pointer: "❯",
+  triangleUpOutline: "△",
+  triangleLeft: "◀",
+  triangleRight: "▶",
+  lozenge: "◆",
+  lozengeOutline: "◇",
+  hamburger: "☰",
+  smiley: "㋡",
+  mustache: "෴",
+  star: "★",
+  play: "▶",
+  nodejs: "⬢",
+  oneSeventh: "⅐",
+  oneNinth: "⅑",
+  oneTenth: "⅒"
+};
+var specialFallbackSymbols2 = {
+  tick: "√",
+  info: "i",
+  warning: "‼",
+  cross: "×",
+  squareSmall: "□",
+  squareSmallFilled: "■",
+  circle: "( )",
+  circleFilled: "(*)",
+  circleDotted: "( )",
+  circleDouble: "( )",
+  circleCircle: "(○)",
+  circleCross: "(×)",
+  circlePipe: "(│)",
+  radioOn: "(*)",
+  radioOff: "( )",
+  checkboxOn: "[×]",
+  checkboxOff: "[ ]",
+  checkboxCircleOn: "(×)",
+  checkboxCircleOff: "( )",
+  pointer: ">",
+  triangleUpOutline: "∆",
+  triangleLeft: "◄",
+  triangleRight: "►",
+  lozenge: "♦",
+  lozengeOutline: "◊",
+  hamburger: "≡",
+  smiley: "☺",
+  mustache: "┌─┐",
+  star: "✶",
+  play: "►",
+  nodejs: "♦",
+  oneSeventh: "1/7",
+  oneNinth: "1/9",
+  oneTenth: "1/10"
+};
+var mainSymbols2 = {
+  ...common3,
+  ...specialMainSymbols2
+};
+var fallbackSymbols2 = {
+  ...common3,
+  ...specialFallbackSymbols2
+};
+var shouldUseMain2 = isUnicodeSupported4();
+var figures2 = shouldUseMain2 ? mainSymbols2 : fallbackSymbols2;
+var dist_default = figures2;
+var replacements2 = Object.entries(specialMainSymbols2);
+
+// src/commands/toolConfig.ts
 function detectForeignProvider(agent) {
   if (agent.id === "codex") {
     const path = `${agent.installMarkerDir}/config.toml`;
@@ -36922,7 +37213,7 @@ async function resolveExistingToolConfig(agent, deps) {
     logger2.debug("init", `${agent.id}: foreign provider detected`);
     console.log(source_default.yellow(t2("init.overwriteForeignAsk", { tool: agent.displayName })));
     const confirm = deps.confirm ?? defaultConfirmOverwrite;
-    const ok = await confirm(t2("init.overwriteConfirm"));
+    const ok = await confirm(t2("init.overwriteConfirm", { tool: agent.displayName }));
     if (!ok) {
       console.log(source_default.red(t2("init.overwriteCancelled", { tool: agent.displayName })));
       return "keep";
@@ -37287,6 +37578,15 @@ async function setKeyWithPlan(plan, token) {
     process.exitCode = 1;
 }
 
+// src/commands/toolConfig.ts
+function useAsciiPointer() {
+  const mutable = dist_default;
+  if (typeof mutable.pointer === "string") {
+    mutable.pointer = ">";
+    logger2.debug("agents", "inquirer pointer glyph set to ASCII '>'");
+  }
+}
+
 // src/commands/doctor.ts
 var AGENTS3 = [claudeCodeManager, codexManager];
 function printRow(status, label, detail = "") {
@@ -37333,6 +37633,7 @@ async function runDoctor() {
 // src/cli.ts
 var program2 = new Command2;
 normalizeWindowsCodepage();
+useAsciiPointer();
 program2.name("mimikkai-connect").description(t("cli.description")).version("0.1.0", "-v, --version", "output the version number").helpOption("-h, --help", "display help").option("--verbose", t("cli.verboseHint"), false).hook("preAction", (thisCommand) => {
   if (thisCommand.opts().verbose)
     setLogLevel("debug");

@@ -10,6 +10,7 @@ import { t } from "./i18n.ts";
 import { runInit } from "./commands/init.ts";
 import { printLangHelp, setLang, showLang } from "./commands/lang.ts";
 import { PLAN_ALIASES, reloadTool, revokeAuth, runInteractiveAuth, setKeyWithPlan } from "./commands/auth.ts";
+import { useAsciiPointer } from "./commands/toolConfig.ts";
 import { runDoctor } from "./commands/doctor.ts";
 
 // Injected at build time via --define (falls back for `bun run src/cli.ts` dev mode).
@@ -20,6 +21,8 @@ const program = new Command();
 
 // Windows legacy codepages garble Cyrillic output; force UTF-8 console once.
 normalizeWindowsCodepage();
+// Replace inquirer's "❯" with ">" so non-UTF-8 terminals render menus cleanly.
+useAsciiPointer();
 
 program
   .name("mimikkai-connect")

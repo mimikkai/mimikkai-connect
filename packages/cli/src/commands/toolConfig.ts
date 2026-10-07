@@ -11,6 +11,15 @@ import { existsSync, readFileSync } from "node:fs";
 import * as TOML from "smol-toml";
 import inquirer from "inquirer";
 import chalk from "chalk";
+
+/** Force an ASCII pointer glyph in inquirer list prompts.
+ * inquirer@9 hardcodes `figures.pointer` ("❯", U+276F) at render time;
+ * on terminals that are not true UTF-8 (legacy Windows codepages) that glyph
+ * garbles the whole line ("❯ Русский" -> "â¯ Ð ÑÑÐºÐ¸Ð¹"). The
+ * @inquirer/figures default export is mutable, so replacing it with ">"
+ * makes the interactive menu codepage-safe. */
+import figures from "@inquirer/figures";
+
 import { t } from "../i18n.ts";
 import { logger } from "../utils/logger.ts";
 import type { AgentManager } from "../agents/base.ts";
@@ -32,7 +41,16 @@ interface ClaudeForeignProbe {
   env?: { ANTHROPIC_BASE_URL?: string } | null;
 }
 
-/** Exported detection helper (also used by `auth reload <tool>`). */
+/** Overwrite the mutable figures default export once per process. */
+export function useAsciiPointer(): void {
+  const mutable = figures as { pointer?: string };
+  if (typeof mutable.pointer === "string") {
+    mutable.pointer = ">";
+    logger.debug("agents", "inquirer pointer glyph set to ASCII '>'");
+  }
+}
+
+/** Codex config.toml stores a provider key; claude settings.json stores env vars. */
 export function detectForeignProvider(agent: AgentManager): boolean {
   if (agent.id === "codex") {
     const path = `${agent.installMarkerDir}/config.toml`;
@@ -136,7 +154,7 @@ export async function resolveExistingToolConfig(
     logger.debug("init", `${agent.id}: foreign provider detected`);
     console.log(chalk.yellow(t("init.overwriteForeignAsk", { tool: agent.displayName })));
     const confirm = deps.confirm ?? defaultConfirmOverwrite;
-    const ok = await confirm(t("init.overwriteConfirm"));
+    const ok = await confirm(t("init.overwriteConfirm", { tool: agent.displayName }));
     if (!ok) {
       console.log(chalk.red(t("init.overwriteCancelled", { tool: agent.displayName })));
       return "keep";
