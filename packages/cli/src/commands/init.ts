@@ -18,6 +18,12 @@ import type { AgentManager } from "../agents/base.ts";
 
 const AGENTS: AgentManager[] = [claudeCodeManager, codexManager];
 
+/** Display names in the language itself (native script). */
+const LANG_NAMES: Record<string, string> = {
+  ru_RU: "Русский",
+  en_US: "English",
+};
+
 export async function runInit(): Promise<void> {
   console.log(chalk.cyan(t("init.welcome")));
 
@@ -28,7 +34,10 @@ export async function runInit(): Promise<void> {
       name: "lang",
       message: t("init.selectLanguage"),
       // ru_RU first — the default
-      choices: SUPPORTED_LANGS.map((code) => ({ name: code, value: code })),
+      choices: SUPPORTED_LANGS.map((code) => ({
+        name: LANG_NAMES[code] ?? code,
+        value: code,
+      })),
       default: "ru_RU",
     },
   ]);

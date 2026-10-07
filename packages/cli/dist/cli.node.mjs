@@ -37010,6 +37010,10 @@ async function persistAuth(token, user) {
 
 // src/commands/init.ts
 var AGENTS = [claudeCodeManager, codexManager];
+var LANG_NAMES = {
+  ru_RU: "Русский",
+  en_US: "English"
+};
 async function runInit() {
   console.log(source_default.cyan(t2("init.welcome")));
   const { lang } = await lib_default.prompt([
@@ -37017,7 +37021,10 @@ async function runInit() {
       type: "list",
       name: "lang",
       message: t2("init.selectLanguage"),
-      choices: SUPPORTED_LANGS.map((code) => ({ name: code, value: code })),
+      choices: SUPPORTED_LANGS.map((code) => ({
+        name: LANG_NAMES[code] ?? code,
+        value: code
+      })),
       default: "ru_RU"
     }
   ]);

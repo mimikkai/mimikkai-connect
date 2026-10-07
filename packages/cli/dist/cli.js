@@ -36957,6 +36957,10 @@ async function setKeyWithPlan(plan, token) {
 
 // src/commands/init.ts
 var AGENTS2 = [claudeCodeManager, codexManager];
+var LANG_NAMES = {
+  ru_RU: "\u0420\u0443\u0441\u0441\u043A\u0438\u0439",
+  en_US: "English"
+};
 async function runInit() {
   console.log(source_default.cyan(t("init.welcome")));
   const { lang } = await lib_default.prompt([
@@ -36964,7 +36968,10 @@ async function runInit() {
       type: "list",
       name: "lang",
       message: t("init.selectLanguage"),
-      choices: SUPPORTED_LANGS.map((code) => ({ name: code, value: code })),
+      choices: SUPPORTED_LANGS.map((code) => ({
+        name: LANG_NAMES[code] ?? code,
+        value: code
+      })),
       default: "ru_RU"
     }
   ]);
