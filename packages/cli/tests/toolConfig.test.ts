@@ -1,6 +1,6 @@
 /**
- * Tests for commands/toolConfig.ts — resolution of an already-configured tool.
- * Deterministic: mock agent + injected confirm; no real user files or network.
+ * Tests for commands/toolConfig.ts — the unified init tool-action menu.
+ * Deterministic: mock agent + stubbed inquirer.prompt; no real user files.
  */
 
 import { describe, expect, test } from "bun:test";
@@ -11,15 +11,15 @@ import inquirer from "inquirer";
 import type { AgentManager, AgentDetectResult } from "../src/agents/base.ts";
 import {
   detectForeignProvider,
-  resolveExistingToolConfig,
-  type ResolveDeps,
-  type ToolConfigResolution,
+  promptToolAction,
+  type ToolAction,
+  type ToolActionDeps,
 } from "../src/commands/toolConfig.ts";
+import { toolChoiceLabel } from "../src/commands/init.ts";
+import { configManager } from "../src/config.ts";
 import { LITELLM_BASE_URL } from "../src/agents/claudeCode.ts";
 
-type MenuAction = "keep" | "unbind" | "rebind";
-
-function makeMockAgent(overrides: Partial<AgentManager> & { detect?: AgentDetectResult; foreign?: boolean; id?: string }): AgentManager {
+function makeMockAgent(overrides: Partial<AgentManager> & { detect?: AgentDetectResult; id?: string }): AgentManager {
   const id = overrides.id ?? "codex";
   const detect: AgentDetectResult =
     overrides.detect !== undefined
@@ -30,7 +30,7 @@ function makeMockAgent(overrides: Partial<AgentManager> & { detect?: AgentDetect
     displayName: id === "claude" ? "Claude Code" : "Codex",
     installMarkerDir: "/nonexistent-marker",
     defaultModel: "glm-5.3-flash",
-    isInstalled: () => Boolean(overrides.foreign) || Boolean(detect.apiKey),
+    isInstalled: () => Boolean(detect.apiKey),
     loadConfig: async () => {},
     unloadConfig: async () => {},
     detectCurrentConfig: () => detect,
@@ -38,95 +38,115 @@ function makeMockAgent(overrides: Partial<AgentManager> & { detect?: AgentDetect
   } as AgentManager;
 }
 
-/** Stub inquirer by injecting confirm; list-menu answers come via lastChoice. */
-let menuAction: MenuAction = "keep";
+/** Stub inquirer: the tool-action list resolves from menuAction, confirms from confirmResult. */
+let menuAction: ToolAction = "proceed";
+let confirmResult = true;
 
-function makeDeps(overrides: Partial<ResolveDeps> & { litellmKey?: string; confirmResult?: boolean } = {}): ResolveDeps {
-  return {
-    getLitellmKey: () => overrides.litellmKey,
-    confirm: async () => overrides.confirmResult ?? true,
-  };
-}
-
-// inquirer.prompt is stubbed so the rebind menu resolves instantly.
 inquirer.prompt = ((async (questions: unknown) => {
-  const q = Array.isArray(questions) ? (questions as { name?: string }[]) : [questions as { name?: string }];
+  const q = Array.isArray(questions) ? (questions as { name?: string; type?: string }[]) : [questions as { name?: string; type?: string }];
   if (q.some((item) => item?.name === "action")) {
     return { action: menuAction };
+  }
+  if (q.some((item) => item?.type === "confirm")) {
+    return { ok: confirmResult };
   }
   throw new Error("unexpected prompt in tests");
 })) as typeof inquirer.prompt;
 
-describe("resolveExistingToolConfig", () => {
-  test("not configured → proceed without prompts", async () => {
+function makeDeps(): ToolActionDeps {
+  return { confirm: async () => confirmResult };
+}
+
+describe("promptToolAction", () => {
+  test("not configured → proceed", async () => {
+    menuAction = "proceed";
     const agent = makeMockAgent({ detect: { plan: null, apiKey: null } });
-    const result = await resolveExistingToolConfig(agent, makeDeps());
+    const result = await promptToolAction(agent, makeDeps());
     expect(result).toBe("proceed");
   });
 
-  test("configured mimikkai with same key → keep", async () => {
-    menuAction = "keep";
+  test("configured mimikkai → proceed", async () => {
+    menuAction = "proceed";
     const agent = makeMockAgent({ detect: { plan: "mimikkai", apiKey: "sk-live" } });
-    const result = await resolveExistingToolConfig(agent, makeDeps({ litellmKey: "sk-live" }));
-    expect(result).toBe("keep");
+    const result = await promptToolAction(agent, makeDeps());
+    expect(result).toBe("proceed");
   });
 
-  test("configured mimikkai with different key → unbind calls unloadConfig", async () => {
+  test("unbind on configured tool calls unloadConfig and returns unbind", async () => {
     menuAction = "unbind";
     let unloaded = 0;
     const agent = makeMockAgent({
-      detect: { plan: "mimikkai", apiKey: "sk-other" },
+      detect: { plan: "mimikkai", apiKey: "sk-live" },
       unloadConfig: async () => {
         unloaded++;
       },
     });
-    const result = await resolveExistingToolConfig(agent, makeDeps({ litellmKey: "sk-current", confirmResult: false }));
+    const result = await promptToolAction(agent, makeDeps());
     expect(unloaded).toBe(1);
     expect(result).toBe("unbind");
   });
 
-  test("configured mimikkai → rebind returns reauthorise", async () => {
-    menuAction = "rebind";
-    const agent = makeMockAgent({ detect: { plan: "mimikkai", apiKey: "sk-live" } });
-    const result = await resolveExistingToolConfig(agent, makeDeps({ litellmKey: "sk-live" }));
-    expect(result).toBe("reauthorise");
-  });
-
-  test("foreign provider → confirm no → keep", async () => {
-    menuAction = "keep"; // not reached; foreign branch asks confirm instead
+  test("unbind on not-configured tool skips unloadConfig and returns keep", async () => {
+    menuAction = "unbind";
+    let unloaded = 0;
     const agent = makeMockAgent({
       detect: { plan: null, apiKey: null },
-      foreign: true,
-      id: "codex",
+      unloadConfig: async () => {
+        unloaded++;
+      },
     });
-    // Monkey-patch detectForeignProvider through the exported probe by pointing
-    // installMarkerDir at a temp file created below.
-    const result = await resolveForeignFlow();
+    const result = await promptToolAction(agent, makeDeps());
+    expect(unloaded).toBe(0);
     expect(result).toBe("keep");
   });
 
-  test("foreign provider → confirm yes → proceed", async () => {
-    const result = await resolveForeignFlow(true);
-    expect(result).toBe("proceed");
+  test("unbind on foreign-configured tool skips unloadConfig and returns keep", async () => {
+    menuAction = "unbind";
+    let unloaded = 0;
+    const agent = makeMockAgent({
+      id: "claude",
+      detect: { plan: null, apiKey: null },
+      unloadConfig: async () => {
+        unloaded++;
+      },
+    });
+    const result = await promptToolAction(agent, makeDeps());
+    expect(unloaded).toBe(0);
+    expect(result).toBe("keep");
+  });
+
+  test("rebind returns rebind without side effects", async () => {
+    menuAction = "rebind";
+    let unloaded = 0;
+    const agent = makeMockAgent({
+      detect: { plan: "mimikkai", apiKey: "sk-live" },
+      unloadConfig: async () => {
+        unloaded++;
+      },
+    });
+    const result = await promptToolAction(agent, makeDeps());
+    expect(unloaded).toBe(0);
+    expect(result).toBe("rebind");
   });
 });
 
-/** Build a temp codex config.toml with a foreign provider and run the resolution. */
-async function resolveForeignFlow(confirmYes = false): Promise<ToolConfigResolution> {
-  const dir = mkdtempSync(join(tmpdir(), "mkk-test-"));
-  writeFileSync(join(dir, "config.toml"), 'model_provider = "openai"\n', "utf-8");
-  const agent = makeMockAgent({ id: "codex" });
-  agent.installMarkerDir = dir;
-  return await resolveExistingToolConfig(agent, {
-    getLitellmKey: () => undefined,
-    confirm: async () => confirmYes,
+describe("toolChoiceLabel", () => {
+  test("bound tool shows MimikkAi-bound label", () => {
+    configManager.setLang("en_US");
+    const agent = makeMockAgent({ id: "codex", detect: { plan: "mimikkai", apiKey: "sk-live" } });
+    expect(toolChoiceLabel(agent)).toBe("Codex (configured for MimikkAi)");
   });
-}
+
+  test("unbound tool shows not-configured label", () => {
+    configManager.setLang("en_US");
+    const agent = makeMockAgent({ id: "codex", detect: { plan: null, apiKey: null } });
+    expect(toolChoiceLabel(agent)).toBe("Codex (not configured for MimikkAi)");
+  });
+});
 
 describe("detectForeignProvider", () => {
   test("codex with foreign provider detected", async () => {
     const agent = makeMockAgent({ id: "codex" });
-
     const dir = mkdtempSync(join(tmpdir(), "mkk-test-"));
     writeFileSync(join(dir, "config.toml"), 'model_provider = "openai"\n', "utf-8");
     agent.installMarkerDir = dir;

@@ -1,7 +1,7 @@
 /**
  * Init wizard for mimikkai-connect (pattern from @z_ai/coding-helper wizard.js).
- * Steps: language → tool selection → account (existing key: rebind?) →
- * existing tool config → config load → summary.
+ * Steps: language → tool selection → tool-action menu (configure / unbind /
+ * bind another account) → [auth] → foreign-overwrite guard → config load → summary.
  */
 
 import inquirer from "inquirer";
@@ -9,9 +9,10 @@ import chalk from "chalk";
 import { configManager } from "../config.ts";
 import { logger } from "../utils/logger.ts";
 import { obfuscate } from "../utils/obfuscate.ts";
+import { printLogo } from "../utils/logo.ts";
 import { SUPPORTED_LANGS, t } from "../i18n.ts";
 import { runInteractiveAuth } from "./auth.ts";
-import { resolveExistingToolConfig } from "./toolConfig.ts";
+import { detectForeignProvider, defaultConfirmOverwrite, promptToolAction } from "./toolConfig.ts";
 import { claudeCodeManager } from "../agents/claudeCode.ts";
 import { codexManager } from "../agents/codex.ts";
 import type { AgentManager } from "../agents/base.ts";
@@ -24,7 +25,28 @@ const LANG_NAMES: Record<string, string> = {
   en_US: "English",
 };
 
+/** Build the tool-choice label: MimikkAi configuration status only. */
+export function toolChoiceLabel(agent: AgentManager): string {
+  const bound = agent.detectCurrentConfig().plan === "mimikkai"
+    ? t("init.toolMimikkaiBound")
+    : t("init.toolMimikkaiUnbound");
+  return `${agent.displayName} (${bound})`;
+}
+
+/** Print the end-of-run summary; key is obfuscated, plan falls back to MimikkAi. */
+function printSummary(tool: string): void {
+  const key = configManager.getLitellmKey();
+  console.log(t("init.summary", {
+    lang: configManager.getLang(),
+    email: configManager.getApiKey() ? "authenticated" : "-",
+    key: key ? obfuscate(key) : "-",
+    plan: configManager.getPlan() ?? "mimikkai",
+    tool,
+  }));
+}
+
 export async function runInit(): Promise<void> {
+  printLogo();
   console.log(chalk.cyan(t("init.welcome")));
 
   // 1. Language
@@ -52,7 +74,7 @@ export async function runInit(): Promise<void> {
       name: "toolId",
       message: t("init.selectTool"),
       choices: sorted.map((agent) => ({
-        name: `${agent.displayName} (${agent.isInstalled() ? t("init.toolInstalled") : t("init.toolNotInstalled")})`,
+        name: toolChoiceLabel(agent),
         value: agent.id,
       })),
     },
@@ -61,28 +83,48 @@ export async function runInit(): Promise<void> {
 
   const agent = AGENTS.find((a) => a.id === toolId)!;
 
-  // 3. Account: reuse the saved mimikkai key or authenticate now
-  const litellmKey = configManager.getLitellmKey();
-  if (litellmKey) {
-    console.log(chalk.yellow(t("init.accountBound", { key: obfuscate(litellmKey) })));
+  // 3. Unified tool-action menu: always shown, before any auth.
+  const action = await promptToolAction(agent);
+  logger.debug("init", "unified tool-action menu");
+
+  if (action === "keep") {
+    // Nothing to unbind — leave the tool untouched, just show the summary.
+    printSummary(agent.displayName);
+    return;
+  }
+
+  if (action === "unbind") {
+    // "Bind another account?" after unbind; yes → auth + reconfigure.
     const { rebind } = await inquirer.prompt([
       {
         type: "confirm",
         name: "rebind",
-        message: t("init.accountBoundPrompt"),
+        message: t("init.unbindConfirmRebind"),
         default: false,
       },
     ]);
-    if (rebind) {
-      console.log(chalk.cyan(t("init.accountBindOther")));
-      const authOk = await runInteractiveAuth();
-      if (!authOk) {
-        console.log(chalk.red(t("init.cancelled")));
-        process.exitCode = 1;
-        return;
-      }
+    if (!rebind) {
+      // Tool config removed; the global key stays bound — make that explicit.
+      console.log(chalk.yellow(t("init.unboundSummary", { tool: agent.displayName })));
+      return;
     }
-  } else {
+    console.log(chalk.cyan(t("init.authRequired")));
+    const authOk = await runInteractiveAuth();
+    if (!authOk) {
+      console.log(chalk.red(t("init.cancelled")));
+      process.exitCode = 1;
+      return;
+    }
+  } else if (action === "rebind") {
+    console.log(chalk.cyan(t("init.authRequired")));
+    const authOk = await runInteractiveAuth();
+    if (!authOk) {
+      console.log(chalk.red(t("init.cancelled")));
+      process.exitCode = 1;
+      return;
+    }
+  } else if (!configManager.getLitellmKey()) {
+    // proceed without a saved key → auth required
     console.log(chalk.cyan(t("init.authRequired")));
     const authOk = await runInteractiveAuth();
     if (!authOk) {
@@ -92,39 +134,14 @@ export async function runInit(): Promise<void> {
     }
   }
 
-  // Resolve what to do if the tool already has a mimikkai/foreign configuration
-  const resolution = await resolveExistingToolConfig(agent, {
-    getLitellmKey: () => configManager.getLitellmKey(),
-  });
-  logger.debug("init", `tool ${agent.id} resolution: ${resolution}`);
-
-  if (resolution === "keep") {
-    // Leave the existing configuration untouched, just show the summary
-    console.log(t("init.summary", {
-      lang: configManager.getLang(),
-      email: configManager.getApiKey() ? "authenticated" : "-",
-      plan: configManager.getPlan() ?? "mimikkai",
-      tool: agent.displayName,
-    }));
-    return;
-  }
-
-  if (resolution === "unbind") {
-    console.log(t("init.summary", {
-      lang: configManager.getLang(),
-      email: configManager.getApiKey() ? "authenticated" : "-",
-      plan: configManager.getPlan() ?? "mimikkai",
-      tool: agent.displayName,
-    }));
-    return;
-  }
-
-  if (resolution === "reauthorise") {
-    console.log(chalk.cyan(t("init.authRequired")));
-    const authOk = await runInteractiveAuth();
-    if (!authOk) {
-      console.log(chalk.red(t("init.cancelled")));
-      process.exitCode = 1;
+  // Foreign provider is never overwritten without an explicit confirmation.
+  if (detectForeignProvider(agent)) {
+    logger.debug("init", `${agent.id}: foreign provider detected`);
+    console.log(chalk.yellow(t("init.overwriteForeignAsk", { tool: agent.displayName })));
+    const ok = await defaultConfirmOverwrite(t("init.overwriteConfirm", { tool: agent.displayName }));
+    if (!ok) {
+      console.log(chalk.red(t("init.overwriteCancelled", { tool: agent.displayName })));
+      printSummary(agent.displayName);
       return;
     }
   }
@@ -139,15 +156,12 @@ export async function runInit(): Promise<void> {
 
   const model = agent.defaultModel;
   await agent.loadConfig(configManager.getPlan() ?? "mimikkai", finalKey, model);
+  if (!agent.isInstalled()) {
+    logger.warn("init", `${agent.id}: configuration written but tool is not installed`);
+    console.log(chalk.yellow(t("init.toolNotInstalledWarn", { tool: agent.displayName })));
+  }
 
   // 4. Summary
   console.log(chalk.green(t("init.configured", { tool: agent.displayName, model })));
-  console.log(
-    t("init.summary", {
-      lang: configManager.getLang(),
-      email: configManager.getApiKey() ? "authenticated" : "-",
-      plan: configManager.getPlan() ?? "mimikkai",
-      tool: agent.displayName,
-    })
-  );
+  printSummary(agent.displayName);
 }

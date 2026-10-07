@@ -1,10 +1,11 @@
 /**
- * Interactive resolution of an already-configured coding tool.
+ * Interactive tool-action menu for the init wizard.
  *
- * Used by `init` (and reusable by `auth reload <tool>`):
- * - already bound to mimikkai → keep / unbind / re-bind another account;
- * - bound to a different provider → confirm before overwriting;
- * - not configured → proceed with normal setup.
+ * Shown unconditionally after the user picks claude or codex, regardless of
+ * the tool's current configuration state:
+ * - configure the tool for mimikkai (proceed);
+ * - remove the mimikkai configuration (unbind; caller may then re-bind);
+ * - bind another mimikkai account (rebind) without touching other tools' configs.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -25,10 +26,9 @@ import { logger } from "../utils/logger.ts";
 import type { AgentManager } from "../agents/base.ts";
 import { LITELLM_BASE_URL } from "../agents/claudeCode.ts";
 
-export type ToolConfigResolution = "proceed" | "keep" | "unbind" | "reauthorise";
+export type ToolAction = "proceed" | "unbind" | "rebind" | "keep";
 
-export interface ResolveDeps {
-  getLitellmKey: () => string | undefined;
+export interface ToolActionDeps {
   /** Confirm prompt (injectable for tests); resolves to true when the user agrees. */
   confirm?(message: string): Promise<boolean>;
 }
@@ -97,69 +97,48 @@ export async function defaultConfirmOverwrite(message: string): Promise<boolean>
 }
 
 /**
- * Interactively resolve what to do with an already-configured tool.
+ * Show the tool-action menu and run the branch-local side effect for unbind.
  *
  * Returns:
- *  - "proceed" — continue normal setup (not bound, or user confirmed overwrite,
- *    or was unbound and asked to configure again);
- *  - "keep" — leave the existing configuration untouched;
- *  - "unbind" — user asked to unbind; `agent.unloadConfig()` was already called,
- *    caller should skip configuration;
- *  - "reauthorise" — user wants to bind another account; caller re-runs auth.
+ *  - "proceed" — caller continues normal setup (auth when no key yet, then
+ *    foreign-overwrite guard, then loadConfig);
+ *  - "unbind" — mimikkai configuration was removed;
+ *    caller asks "bind another account?" only after an actual removal;
+ *  - "keep" — nothing to unbind; caller shows the summary and stops;
+ *  - "rebind" — caller runs interactive re-auth and reconfigures.
  */
-export async function resolveExistingToolConfig(
+export async function promptToolAction(
   agent: AgentManager,
-  deps: ResolveDeps,
-): Promise<ToolConfigResolution> {
+  deps: ToolActionDeps = {},
+): Promise<ToolAction> {
   const detected = agent.detectCurrentConfig();
   const isMimikkai = detected.plan === "mimikkai" && Boolean(detected.apiKey);
+  logger.debug("init", `${agent.id}: tool-action menu (mimikkaiConfig=${isMimikkai})`);
 
-  if (isMimikkai) {
-    const sameKey = detected.apiKey === deps.getLitellmKey();
-    logger.debug("init", `${agent.id}: already configured by mimikkai (key=${sameKey ? "current" : "other"})`);
-    if (sameKey) {
-      console.log(chalk.yellow(t("init.alreadyConfigured", { tool: agent.displayName })));
-    } else {
-      console.log(chalk.yellow(t("init.alreadyConfiguredOtherKey", { tool: agent.displayName })));
-    }
-    const { action } = await inquirer.prompt([
-      {
-        type: "list",
-        name: "action",
-        message: t("init.rebindPrompt"),
-        choices: [
-          { name: t("init.rebindKeep"), value: "keep" },
-          { name: t("init.rebindUnbind"), value: "unbind" },
-          { name: t("init.rebindRebind"), value: "rebind" },
-        ],
-      },
-    ]);
-    logger.debug("init", `${agent.id}: rebind action=${action}`);
+  const { action } = await inquirer.prompt([
+    {
+      type: "list",
+      name: "action",
+      message: t("init.actionPrompt", { tool: agent.displayName }),
+      choices: [
+        { name: t("init.actionConfigure", { tool: agent.displayName }), value: "proceed" },
+        { name: t("init.actionUnbind", { tool: agent.displayName }), value: "unbind" },
+        { name: t("init.actionRebind"), value: "rebind" },
+      ],
+    },
+  ]);
+  logger.debug("init", `${agent.id}: tool action=${action}`);
 
-    if (action === "keep") return "keep";
-
-    if (action === "unbind") {
-      await agent.unloadConfig();
-      console.log(chalk.green(t("init.unbound", { tool: agent.displayName })));
-      const confirm = deps.confirm ?? defaultConfirmOverwrite;
-      const again = await confirm(t("init.configureAgainPrompt"));
-      return again ? "proceed" : "unbind";
-    }
-
-    return "reauthorise";
-  }
-
-  const foreign = detectForeignProvider(agent);
-  if (foreign) {
-    logger.debug("init", `${agent.id}: foreign provider detected`);
-    console.log(chalk.yellow(t("init.overwriteForeignAsk", { tool: agent.displayName })));
-    const confirm = deps.confirm ?? defaultConfirmOverwrite;
-    const ok = await confirm(t("init.overwriteConfirm", { tool: agent.displayName }));
-    if (!ok) {
-      console.log(chalk.red(t("init.overwriteCancelled", { tool: agent.displayName })));
+  if (action === "unbind") {
+    if (!isMimikkai) {
+      console.log(chalk.yellow(t("init.unbindNothing", { tool: agent.displayName })));
+      // Nothing was removed — no "bind another account?" and no reconfiguration.
       return "keep";
     }
+    await agent.unloadConfig();
+    console.log(chalk.green(t("init.unbound", { tool: agent.displayName })));
+    return "unbind";
   }
 
-  return "proceed";
+  return action;
 }
