@@ -24,7 +24,10 @@
     "configureAgainPrompt": "Configure {{tool}} again?",
     "overwriteForeignAsk": "{{tool}} is currently configured for a different provider.",
     "overwriteConfirm": "Overwrite the {{tool}} configuration with mimikkai?",
-    "overwriteCancelled": "{{tool}} setup cancelled — the existing configuration was left untouched."
+    "overwriteCancelled": "{{tool}} setup cancelled — the existing configuration was left untouched.",
+    "accountBound": "A mimikkai account is already bound (key {{key}}).",
+    "accountBoundPrompt": "Bind a different account?",
+    "accountBindOther": "Re-authorization..."
   },
   "lang": {
     "current": "Current language: {{lang}}",

@@ -24,7 +24,10 @@
     "configureAgainPrompt": "Настроить {{tool}} заново?",
     "overwriteForeignAsk": "{{tool}} сейчас настроен на другого провайдера.",
     "overwriteConfirm": "Перезаписать конфигурацию {{tool}} на mimikkai?",
-    "overwriteCancelled": "Настройка {{tool}} отменена — существующая конфигурация не тронута."
+    "overwriteCancelled": "Настройка {{tool}} отменена — существующая конфигурация не тронута.",
+    "accountBound": "Аккаунт mimikkai уже привязан (ключ {{key}}).",
+    "accountBoundPrompt": "Привязать другой аккаунт?",
+    "accountBindOther": "Повторная авторизация..."
   },
   "lang": {
     "current": "Текущий язык: {{lang}}",

@@ -1,12 +1,14 @@
 /**
  * Init wizard for mimikkai-connect (pattern from @z_ai/coding-helper wizard.js).
- * Steps: language → auth (device flow) → tool selection → config load → summary.
+ * Steps: language → tool selection → account (existing key: rebind?) →
+ * existing tool config → config load → summary.
  */
 
 import inquirer from "inquirer";
 import chalk from "chalk";
 import { configManager } from "../config.ts";
 import { logger } from "../utils/logger.ts";
+import { obfuscate } from "../utils/obfuscate.ts";
 import { SUPPORTED_LANGS, t } from "../i18n.ts";
 import { runInteractiveAuth } from "./auth.ts";
 import { resolveExistingToolConfig } from "./toolConfig.ts";
@@ -32,16 +34,8 @@ export async function runInit(): Promise<void> {
   ]);
   configManager.setLang(lang);
 
-  // 2. Auth
-  console.log(chalk.cyan(t("init.authRequired")));
-  const authOk = await runInteractiveAuth();
-  if (!authOk) {
-    console.log(chalk.red(t("init.cancelled")));
-    process.exitCode = 1;
-    return;
-  }
-
-  // 3. Tool selection (installed tools first)
+  // 2. Tool selection (installed tools first) — before auth so the user picks
+  //    what to configure even when already signed in
   const sorted = [...AGENTS].sort((a, b) => Number(b.isInstalled()) - Number(a.isInstalled()));
   const { toolId } = await inquirer.prompt([
     {
@@ -54,8 +48,40 @@ export async function runInit(): Promise<void> {
       })),
     },
   ]);
+  logger.debug("init", "reordered flow: tool selected before auth");
 
   const agent = AGENTS.find((a) => a.id === toolId)!;
+
+  // 3. Account: reuse the saved mimikkai key or authenticate now
+  const litellmKey = configManager.getLitellmKey();
+  if (litellmKey) {
+    console.log(chalk.yellow(t("init.accountBound", { key: obfuscate(litellmKey) })));
+    const { rebind } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "rebind",
+        message: t("init.accountBoundPrompt"),
+        default: false,
+      },
+    ]);
+    if (rebind) {
+      console.log(chalk.cyan(t("init.accountBindOther")));
+      const authOk = await runInteractiveAuth();
+      if (!authOk) {
+        console.log(chalk.red(t("init.cancelled")));
+        process.exitCode = 1;
+        return;
+      }
+    }
+  } else {
+    console.log(chalk.cyan(t("init.authRequired")));
+    const authOk = await runInteractiveAuth();
+    if (!authOk) {
+      console.log(chalk.red(t("init.cancelled")));
+      process.exitCode = 1;
+      return;
+    }
+  }
 
   // Resolve what to do if the tool already has a mimikkai/foreign configuration
   const resolution = await resolveExistingToolConfig(agent, {
@@ -63,7 +89,6 @@ export async function runInit(): Promise<void> {
   });
   logger.debug("init", `tool ${agent.id} resolution: ${resolution}`);
 
-  const litellmKey = configManager.getLitellmKey();
   if (resolution === "keep") {
     // Leave the existing configuration untouched, just show the summary
     console.log(t("init.summary", {

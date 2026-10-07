@@ -34384,6 +34384,11 @@ var chalk = createChalk();
 var chalkStderr = createChalk({ level: stderrColor ? stderrColor.level : 0 });
 var source_default = chalk;
 
+// src/utils/obfuscate.ts
+function obfuscate(value) {
+  return value.length > 4 ? `${value.slice(0, 4)}...` : "...";
+}
+
 // src/commands/auth.ts
 import { spawn as spawn2 } from "child_process";
 
@@ -35261,11 +35266,6 @@ class Ora {
 }
 function ora2(options) {
   return new Ora(options);
-}
-
-// src/utils/obfuscate.ts
-function obfuscate(value) {
-  return value.length > 4 ? `${value.slice(0, 4)}...` : "...";
 }
 
 // src/auth/types.ts
@@ -36969,13 +36969,6 @@ async function runInit() {
     }
   ]);
   configManager.setLang(lang);
-  console.log(source_default.cyan(t("init.authRequired")));
-  const authOk = await runInteractiveAuth();
-  if (!authOk) {
-    console.log(source_default.red(t("init.cancelled")));
-    process.exitCode = 1;
-    return;
-  }
   const sorted = [...AGENTS2].sort((a, b) => Number(b.isInstalled()) - Number(a.isInstalled()));
   const { toolId } = await lib_default.prompt([
     {
@@ -36988,12 +36981,41 @@ async function runInit() {
       }))
     }
   ]);
+  logger.debug("init", "reordered flow: tool selected before auth");
   const agent = AGENTS2.find((a) => a.id === toolId);
+  const litellmKey = configManager.getLitellmKey();
+  if (litellmKey) {
+    console.log(source_default.yellow(t("init.accountBound", { key: obfuscate(litellmKey) })));
+    const { rebind } = await lib_default.prompt([
+      {
+        type: "confirm",
+        name: "rebind",
+        message: t("init.accountBoundPrompt"),
+        default: false
+      }
+    ]);
+    if (rebind) {
+      console.log(source_default.cyan(t("init.accountBindOther")));
+      const authOk = await runInteractiveAuth();
+      if (!authOk) {
+        console.log(source_default.red(t("init.cancelled")));
+        process.exitCode = 1;
+        return;
+      }
+    }
+  } else {
+    console.log(source_default.cyan(t("init.authRequired")));
+    const authOk = await runInteractiveAuth();
+    if (!authOk) {
+      console.log(source_default.red(t("init.cancelled")));
+      process.exitCode = 1;
+      return;
+    }
+  }
   const resolution = await resolveExistingToolConfig(agent, {
     getLitellmKey: () => configManager.getLitellmKey()
   });
   logger.debug("init", `tool ${agent.id} resolution: ${resolution}`);
-  const litellmKey = configManager.getLitellmKey();
   if (resolution === "keep") {
     console.log(t("init.summary", {
       lang: configManager.getLang(),
